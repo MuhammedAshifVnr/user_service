@@ -1,202 +1,69 @@
 
-# User Service Project
+# User Service - gRPC API
 
-This project is a **User Service** built using **Golang**, **PostgreSQL**, and **Redis**. It provides a service for searching users based on various filters, including full-text search for fields like `f_name`, `city`, and `phone`.
+This project is a User Service that exposes a gRPC API for managing user details, including search functionality. The service is built using Golang and utilizes PostgreSQL for data storage. The service also includes caching with Redis and supports full-text search using PostgreSQL's built-in search capabilities.
 
-## Features
+## Prerequisites
 
-- **Full-Text Search**: Allows searching users by name, city, or any other relevant text fields using PostgreSQL's full-text search with `tsvector` and `GIN` index.
-- **Search Filters**: Supports filtering by city, phone, marital status, and a custom query string.
-- **Pagination**: Results can be paginated with `LIMIT` and `OFFSET` for optimized large data queries.
-- **Caching**: Uses **Redis** for caching query results to improve response time for frequently searched queries.
-- **Efficient Data Storage**: Implements a `search_vector` column in PostgreSQL to store precomputed text vectors for full-text search.
+Before you can build and run the application, ensure you have the following installed:
 
-## Installation
+- Docker
+- Go (Golang) 1.22.2 or higher
+- Docker Compose (optional, if you need to manage multiple services)
 
-### Prerequisites
+## Setup and Installation
 
-- Go (1.18+)
-- PostgreSQL (with full-text search support)
-- Redis (for caching)
-- Docker (Optional for containerization)
+### 1. Clone the Repository
 
-### Setting up the Project
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/MuhammedAshifVnr/user_service.git
-   cd user_service
-   ```
-
-2. **Install Dependencies**:
-   Run the following command to install the Go dependencies:
-   ```bash
-   go mod tidy
-   ```
-
-3. **Set up PostgreSQL Database**:
-   Make sure PostgreSQL is installed and running. Create the required database and table. You can use the following SQL commands:
-   ```sql
-   CREATE DATABASE user_service;
-
-   CREATE TABLE users (
-     id SERIAL PRIMARY KEY,
-     f_name TEXT,
-     city TEXT,
-     phone TEXT,
-     height FLOAT,
-     married BOOLEAN,
-     search_vector TSVECTOR
-   );
-
-   CREATE INDEX search_vector_idx ON users USING GIN (search_vector);
-   ```
-
-4. **Set up Redis**:
-   Install and run Redis. You can use a Docker container for Redis:
-   ```bash
-   docker run --name redis -p 6379:6379 -d redis
-   ```
-
-5. **Configure Environment Variables**:
-   Set up environment variables for your database and Redis connection.
-   - `DB_HOST`: The PostgreSQL host (e.g., `localhost`).
-   - `DB_PORT`: The PostgreSQL port (e.g., `5432`).
-   - `DB_USER`: The PostgreSQL username (e.g., `user`).
-   - `DB_PASSWORD`: The PostgreSQL password (e.g., `password`).
-   - `DB_NAME`: The PostgreSQL database name (e.g., `user_service`).
-   - `REDIS_HOST`: The Redis host (e.g., `localhost`).
-   - `REDIS_PORT`: The Redis port (e.g., `6379`).
-
-6. **Run the Application**:
-   After configuring the environment variables, run the application:
-   ```bash
-   go run main.go
-   ```
-
-## API Endpoints
-
-### Search Users
-
-**Endpoint**: `/search`
-
-**Method**: `POST`
-
-**Request Body**:
-```json
-{
-  "city": "New York",
-  "phone": "1234567890",
-  "query": "Steve",
-  "married": true,
-  "limit": 10,
-  "offset": 0
-}
-```
-
-**Response**:
-```json
-{
-  "users": [
-    {
-      "id": 1,
-      "f_name": "Steve",
-      "city": "New York",
-      "phone": "1234567890",
-      "height": 5.9,
-      "married": true
-    }
-  ]
-}
-```
-
-### Caching
-
-- The search results are cached using **Redis** for 5 minutes to improve response times for repeated searches with the same parameters.
-
-## Database and Full-Text Search
-
-- **`search_vector`**: A `tsvector` column is used to store indexed text data, allowing for fast full-text search.
-- **`GIN Index`**: A GIN index is created on the `search_vector` column to optimize search queries.
-
-## Testing
-
-1. **Unit Tests**:
-   - Write unit tests for repository and service layers to ensure correctness.
-   - Example:
-   ```bash
-   go test ./...
-   ```
-
-2. **Integration Tests**:
-   - Test the API endpoints using tools like **Postman** or **cURL**.
-
-## Docker (Optional)
-
-You can also run the project in Docker for easy containerization.
-
-### Dockerfile
-
-```dockerfile
-FROM golang:1.18
-
-WORKDIR /app
-
-COPY . .
-
-RUN go mod tidy
-RUN go build -o user_service .
-
-EXPOSE 8080
-
-CMD ["./user_service"]
-```
-
-### Docker Compose (Optional)
-
-You can use Docker Compose to set up PostgreSQL and Redis along with the Go application.
-
-```yaml
-version: '3'
-
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: user_service
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-    depends_on:
-      - db
-      - redis
-
-  db:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: user_service
-    ports:
-      - "5432:5432"
-
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-```
-
-Run the Docker Compose setup:
 ```bash
-docker-compose up
+git clone <repository-url>
+cd <repository-directory>
 ```
+
+### 2. Build the Docker Image
+
+To build the Docker image, run the following command:
+
+```bash
+docker build -t user-svc .
+```
+
+This will create a Docker image named `user-svc` using the provided `Dockerfile`. The build process includes:
+
+- Downloading Go dependencies.
+- Compiling the application.
+- Creating a lightweight runtime image with the compiled binary and environment variables.
+
+### 3. Running the Docker Container
+
+Once the image is built, you can run the container:
+
+```bash
+docker run -d -p 5001:5001 --name user-svc user-svc
+```
+
+This will start the container and expose the application on port `5001`.
+
+### 4. Environment Configuration
+
+The service uses an `.env` file to configure environment variables. This file is copied into the container during the build process. You can modify the `.env` file to set database credentials, Redis configurations, and other service-specific variables.
+
+### 5. Accessing the gRPC Service
+
+Once the container is running, you can interact with the service through the gRPC endpoint exposed on port `5001`.
+
+### 6. Full-Text Search and Caching
+
+This service uses PostgreSQL's full-text search capabilities to perform efficient searches on user data. Additionally, caching is implemented using Redis to reduce database load and improve search performance.
+
+## API Documentation
+
+API documentation can be generated using tools like Swagger or Postman. The service supports CRUD operations for user details and a full-text search endpoint to search users based on criteria such as city, phone, marital status, and more.
+
+## Contributing
+
+Feel free to fork the repository, create a new branch, and submit pull requests for any improvements or bug fixes.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
