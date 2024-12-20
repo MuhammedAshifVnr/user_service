@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package user;
+
+option go_package ="./";
+
+service UserService {
+    rpc GetUserByID (GetUserByIDRequest) returns (User);
+    rpc GetUsersByIDs (GetUsersByIDsRequest) returns (GetUsersByIDsResponse);
+    rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse);
+    rpc CreateUser (CreateUserRequest) returns (Empty);
+}
+
+message Empty{
+
+}
+
+message User {
+    uint64 id = 1;
+    string fname = 2;
+    string city = 3;
+    string phone = 4;
+    double height = 5;
+    bool married = 6;
+}
+
+message GetUserByIDRequest {
+    uint64 id = 1;
+}
+
+message GetUsersByIDsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetUsersByIDsResponse {
+    repeated User users = 1;
+}
+
+message SearchUsersRequest {
+    string city = 1;
+    string phone = 2;
+    string query = 3; 
+    bool married = 4;
+    int32 limit = 5;
+    int32 offset = 6;
+  }
+
+message SearchUsersResponse {
+    repeated User users = 1;
+}
+
+message CreateUserRequest {
+    string fname = 1;
+    string city = 2;
+    string phone = 3;
+    double height = 4;
+    bool married = 5;
+}
